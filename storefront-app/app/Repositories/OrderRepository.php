@@ -87,6 +87,14 @@ class OrderRepository {
             ->get();
     }
 
+    # admin order list || left join so orders from deleted customers still show
+    public function get_all_orders():Collection{
+        return DB::table(static::ORDER_TABLE)
+            ->leftJoin('customer', 'customer.user_id', '=', 'app_order.user_id')
+            ->orderByDesc('app_order.created_at')
+            ->get(['app_order.*', 'customer.email']);
+    }
+
     # item_price is the price paid at purchase
     public function get_order_items(int $order_id):Collection{
         return DB::table(static::ITEM_TABLE)

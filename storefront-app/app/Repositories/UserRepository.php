@@ -1,8 +1,8 @@
 <?php
 namespace App\Repositories;
 
-use app\Exceptions\DuplicateEmailException;
-use app\Exceptions\UserInUseException;
+use App\Exceptions\DuplicateEmailException;
+use App\Exceptions\UserInUseException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -96,7 +96,7 @@ class UserRepository {
         }
     }
 
-    private function is_unique_violation(QueryException $e):bool{
+    protected function is_unique_violation(QueryException $e):bool{
         return ($e->errorInfo[0] ?? null) === '23505';
     }
 }
