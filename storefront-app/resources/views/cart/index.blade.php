@@ -47,6 +47,7 @@
         </table>
         <div class="actions" style="justify-content:flex-end">
             <span class="total">Total: <strong>${{ number_format($total / 100, 2) }}</strong></span>
+            <a class="btn big secondary" href="{{ route('products.index') }}">Continue shopping</a>
             <a class="btn big" href="{{ route('checkout.show') }}">Checkout</a>
         </div>
     @endif

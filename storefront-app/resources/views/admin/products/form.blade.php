@@ -40,13 +40,12 @@
 
         <div class="row">
             <div>
+                <label for="stock">Stock</label>
+                <input type="number" id="stock" name="stock" min="0" required
+                    value="{{ old('stock', $product->stock ?? 0) }}">
                 @if ($product)
-                    {{-- +/- so it can't clobber stock that changed from a checkout --}}
-                    <label for="stock_change">Adjust stock (currently {{ $product->stock }}, use negative to remove)</label>
-                    <input type="number" id="stock_change" name="stock_change" value="{{ old('stock_change', 0) }}">
-                @else
-                    <label for="stock">Starting stock</label>
-                    <input type="number" id="stock" name="stock" min="0" value="{{ old('stock', 0) }}" required>
+                    {{-- what stock was when the page loaded, controller applies the difference --}}
+                    <input type="hidden" name="original_stock" value="{{ old('original_stock', $product->stock) }}">
                 @endif
             </div>
             <div>

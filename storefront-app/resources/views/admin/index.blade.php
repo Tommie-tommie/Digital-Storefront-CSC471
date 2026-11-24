@@ -22,13 +22,15 @@
                     <td><span class="badge {{ $product->status }}">{{ $product->status }}</span></td>
                     <td class="right">
                         <a class="btn secondary" href="{{ route('admin.products.edit', $product->sku) }}">Edit</a>
-                        {{-- if it's referenced by a cart/order the controller retires it instead --}}
-                        <form method="POST" action="{{ route('admin.products.destroy', $product->sku) }}" class="inline"
-                            onsubmit="return confirm('Delete {{ addslashes($product->product_name) }}?')">
-                            @csrf
-                            @method('DELETE')
-                            <button class="btn danger" type="submit">Delete</button>
-                        </form>
+                        {{-- soft delete: sets status RETIRED so customers can't see it --}}
+                        @if ($product->status !== 'RETIRED')
+                            <form method="POST" action="{{ route('admin.products.retire', $product->sku) }}" class="inline"
+                                onsubmit="return confirm('Retire {{ addslashes($product->product_name) }}? It will be hidden from the shop.')">
+                                @csrf
+                                @method('PATCH')
+                                <button class="btn danger" type="submit">Retire</button>
+                            </form>
+                        @endif
                     </td>
                 </tr>
             @empty

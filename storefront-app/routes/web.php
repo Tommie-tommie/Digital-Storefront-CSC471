@@ -47,6 +47,7 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::post('/products', [AdminProductController::class, 'store'])->name('products.store');
     Route::get('/products/{sku}/edit', [AdminProductController::class, 'edit'])->whereNumber('sku')->name('products.edit');
     Route::put('/products/{sku}', [AdminProductController::class, 'update'])->whereNumber('sku')->name('products.update');
+    Route::patch('/products/{sku}/retire', [AdminProductController::class, 'retire'])->whereNumber('sku')->name('products.retire');
     Route::delete('/products/{sku}', [AdminProductController::class, 'destroy'])->whereNumber('sku')->name('products.destroy');
 
     Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');

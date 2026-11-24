@@ -48,15 +48,17 @@ class AdminProductController extends Controller
 
     public function update(Request $request, int $sku):RedirectResponse{
         $data = $request->validate($this->rules() + [
-            'stock_change' => 'nullable|integer|min:-1000000|max:1000000'
+            'stock' => 'required|integer|min:0|max:1000000',
+            'original_stock' => 'required|integer|min:0'
         ]);
         if (!$this->products->get_product_by_sku($sku)) {
             abort(404);
         }
-        # stock is +/- instead of overwriting so it doesn't clobber checkouts happening at the same time
-        $change = (int) ($data['stock_change'] ?? 0);
+        # admin types the new number, but we apply the difference (+/-) instead of overwriting
+        # so a checkout that happened while the form was open doesn't get clobbered
+        $change = (int) $data['stock'] - (int) $data['original_stock'];
         if ($change < 0 && !$this->products->decrease_stock($sku, -$change)) {
-            return back()->withErrors(['stock_change' => 'Can\'t remove more stock than there is.'])->withInput();
+            return back()->withErrors(['stock' => 'Stock changed while you were editing (someone bought some), reload and try again.'])->withInput();
         }
         if ($change > 0) {
             $this->products->increase_stock($sku, $change);
@@ -71,16 +73,28 @@ class AdminProductController extends Controller
         return redirect()->route('admin.products.index')->with('status', 'Product #' . $sku . ' updated.');
     }
 
-    # FK is ON DELETE RESTRICT, so if it's been ordered/carted we retire it instead
+    # "delete" = soft delete, set to RETIRED so it disappears from the shop
+    # hard deleting would break old orders (ordered_cart FK is ON DELETE RESTRICT anyway)
+    # can bring it back by setting status to ACTIVE in the edit form
+    public function retire(int $sku):RedirectResponse{
+        if (!$this->products->update_product_status($sku, ProductStatus::RETIRED)) {
+            abort(404);
+        }
+        return redirect()->route('admin.products.index')
+            ->with('status', 'Product #' . $sku . ' retired, it\'s hidden from the shop now.');
+    }
+
+    # permanent delete, only from the edit page
+    # FK is ON DELETE RESTRICT so postgres blocks it if it's in any cart/order -> tell them to retire instead
     public function destroy(int $sku):RedirectResponse{
         try {
-            $this->products->delete_product($sku);
-            return redirect()->route('admin.products.index')->with('status', 'Product #' . $sku . ' deleted.');
+            if (!$this->products->delete_product($sku)) {
+                abort(404);
+            }
         } catch (ProductInUseException $e) {
-            $this->products->update_product_status($sku, ProductStatus::RETIRED);
-            return redirect()->route('admin.products.index')
-                ->with('status', 'Product #' . $sku . ' is in carts/orders, so it was set to RETIRED instead.');
+            return back()->withErrors(['delete' => 'Can\'t delete, this product is in a cart or an order. Retire it instead.']);
         }
+        return redirect()->route('admin.products.index')->with('status', 'Product #' . $sku . ' permanently deleted.');
     }
 
     # shared by store + update || Rule::enum keeps status to the 3 enum values
